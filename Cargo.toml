@@ -2,8 +2,16 @@
 name = "cargo-dockerfile"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["George Liontos <sdi1600094@di.uoa.gr>"]
+readme = "README.md"
+categories = ["command-line-utilities"]
+exclude = ["build/**/*.o", "doc/**/*.html"]
+include = ["src/**/*", "Cargo.toml"]
+repository = "https://github.com/GeorgeLS/cargo-dockerfile"
+description = """
+cargo dockerfile is a cargo plugin for generating Dockerfiles out of your Rust project
+"""
+license = "GPL-2.0"
 
 [dependencies]
 walkdir = "2.3.2"
