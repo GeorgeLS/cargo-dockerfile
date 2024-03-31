@@ -28,7 +28,11 @@ impl<'p> Graph<'p> {
         // is the sum 1 + 2 + ... + n - 1 where n is the number of nodes.
         // This is the sum of first n - 1 natural numbers which can be computed
         // directly from the formula below (check discrete maths :D)
-        let max_edge_num = libs.len() * (libs.len() - 1) / 2;
+        let max_edge_num = if libs.is_empty() {
+            0
+        } else {
+            libs.len() * (libs.len() - 1) / 2
+        };
         let mut edges = Vec::with_capacity(max_edge_num);
         let path_to_index_map: HashMap<_, _> =
             libs.iter().enumerate().map(|(i, e)| (e, i)).collect();
