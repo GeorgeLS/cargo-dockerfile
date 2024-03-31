@@ -181,4 +181,38 @@ mod tests {
 
         assert_eq!(content, include_str!("../examples/basic.Dockerfile"));
     }
+
+    #[test]
+    fn it_should_generate_for_basic_example_with_multistage() {
+        let cli = crate::cli::Cli {
+            _ignore: None,
+            builder_image: "rust:latest".into(),
+            runner_image: Some("rust:latest".into()),
+            app_path: "/code".into(),
+            user: "root".into(),
+            cmd: None,
+            entrypoint: None,
+        };
+        let root_dir = std::env::current_dir()
+            .unwrap()
+            .join("examples")
+            .join("basic");
+
+        let (libs, bins) = crate::get_crate_libs_and_bins(&root_dir);
+
+        let graph = crate::Graph::from_libs(&libs).unwrap();
+        let sorted_libs = graph.get_topologically_sorted_libs();
+
+        let content = super::generate_dockerfile(
+            &root_dir,
+            &cli,
+            sorted_libs.iter().rev().copied(),
+            bins.iter(),
+        );
+
+        assert_eq!(
+            content,
+            include_str!("../examples/basic-multistage.Dockerfile")
+        );
+    }
 }
