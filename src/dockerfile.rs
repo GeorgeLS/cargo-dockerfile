@@ -58,7 +58,7 @@ RUN cargo build --release
     ))
 }
 
-fn get_dockerfile(root_dir: &Path) -> PathBuf {
+pub(crate) fn get_dockerfile(root_dir: &Path) -> PathBuf {
     let mut buf = root_dir.to_path_buf();
     buf.push("Dockerfile");
     if buf.exists() {
@@ -69,13 +69,12 @@ fn get_dockerfile(root_dir: &Path) -> PathBuf {
     buf
 }
 
-pub fn generate_dockerfile<'i, L, B>(root_dir: &Path, cli: &Cli, libs: L, bins: B)
+pub(crate) fn generate_dockerfile<'i, L, B>(root_dir: &Path, cli: &Cli, libs: L, bins: B) -> String
 where
     L: Iterator<Item = &'i PathBuf>,
     B: Iterator<Item = &'i PathBuf> + Clone,
 {
     let mut contents = String::new();
-    let dockerfile = get_dockerfile(root_dir);
 
     contents.push_str(&format!("FROM {} as builder\n", &cli.builder_image));
 
@@ -195,5 +194,5 @@ CMD [{}]
         ));
     }
 
-    std::fs::write(dockerfile, contents).expect("Could not write Dockerfile");
+    contents
 }

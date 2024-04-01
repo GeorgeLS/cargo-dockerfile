@@ -9,6 +9,7 @@ use crate::dockerfile::generate_dockerfile;
 use crate::predicates::{entry_predicate, is_hidden};
 use cargo_toml::Manifest;
 use clap::Parser;
+use dockerfile::get_dockerfile;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use walkdir::{DirEntry, WalkDir};
@@ -28,7 +29,11 @@ impl<'p> Graph<'p> {
         // is the sum 1 + 2 + ... + n - 1 where n is the number of nodes.
         // This is the sum of first n - 1 natural numbers which can be computed
         // directly from the formula below (check discrete maths :D)
-        let max_edge_num = libs.len() * (libs.len() - 1) / 2;
+        let max_edge_num = if libs.is_empty() {
+            0
+        } else {
+            libs.len() * (libs.len() - 1) / 2
+        };
         let mut edges = Vec::with_capacity(max_edge_num);
         let path_to_index_map: HashMap<_, _> =
             libs.iter().enumerate().map(|(i, e)| (e, i)).collect();
@@ -132,12 +137,82 @@ fn main() -> anyhow::Result<()> {
     let graph = Graph::from_libs(&libs)?;
     let sorted_libs = graph.get_topologically_sorted_libs();
 
-    generate_dockerfile(
+    let contents = generate_dockerfile(
         &root_dir,
         &cli,
         sorted_libs.iter().rev().copied(),
         bins.iter(),
     );
+    let dockerfile = get_dockerfile(&root_dir);
+    std::fs::write(dockerfile, contents).expect("couldn't write dockerfile");
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_should_generate_for_basic_example() {
+        let cli = crate::cli::Cli {
+            _ignore: None,
+            builder_image: "rust:latest".into(),
+            runner_image: None,
+            app_path: "/code".into(),
+            user: "root".into(),
+            cmd: None,
+            entrypoint: None,
+        };
+        let root_dir = std::env::current_dir()
+            .unwrap()
+            .join("examples")
+            .join("basic");
+
+        let (libs, bins) = crate::get_crate_libs_and_bins(&root_dir);
+
+        let graph = crate::Graph::from_libs(&libs).unwrap();
+        let sorted_libs = graph.get_topologically_sorted_libs();
+
+        let content = super::generate_dockerfile(
+            &root_dir,
+            &cli,
+            sorted_libs.iter().rev().copied(),
+            bins.iter(),
+        );
+
+        assert_eq!(content, include_str!("../examples/basic.Dockerfile"));
+    }
+
+    #[test]
+    fn it_should_generate_for_basic_example_with_multistage() {
+        let cli = crate::cli::Cli {
+            _ignore: None,
+            builder_image: "rust:latest".into(),
+            runner_image: Some("rust:latest".into()),
+            app_path: "/code".into(),
+            user: "root".into(),
+            cmd: None,
+            entrypoint: None,
+        };
+        let root_dir = std::env::current_dir()
+            .unwrap()
+            .join("examples")
+            .join("basic");
+
+        let (libs, bins) = crate::get_crate_libs_and_bins(&root_dir);
+
+        let graph = crate::Graph::from_libs(&libs).unwrap();
+        let sorted_libs = graph.get_topologically_sorted_libs();
+
+        let content = super::generate_dockerfile(
+            &root_dir,
+            &cli,
+            sorted_libs.iter().rev().copied(),
+            bins.iter(),
+        );
+
+        assert_eq!(
+            content,
+            include_str!("../examples/basic-multistage.Dockerfile")
+        );
+    }
 }

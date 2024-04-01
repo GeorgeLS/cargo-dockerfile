@@ -7,7 +7,7 @@
 pub struct Cli {
     // This is because cargo passes the subcommand name to the program itself as the first argument
     #[clap(hidden = true, required = false)]
-    _ignore: Option<String>,
+    pub(crate) _ignore: Option<String>,
     #[clap(
         short,
         long,
