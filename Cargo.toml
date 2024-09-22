@@ -5,6 +5,7 @@ edition = "2021"
 authors = ["George Liontos <sdi1600094@di.uoa.gr>"]
 readme = "README.md"
 categories = ["command-line-utilities"]
+keywords = ["cargo", "docker", "dockerfile", "generator"]
 exclude = ["build/**/*.o", "doc/**/*.html"]
 include = ["src/**/*", "Cargo.toml"]
 repository = "https://github.com/GeorgeLS/cargo-dockerfile"
@@ -19,3 +20,13 @@ cargo_toml = "0.20.4"
 anyhow = "1.0.89"
 whoami = "1.5.2"
 clap = { version = "4.5.18", features = ["derive"]}
+
+[lints.clippy]
+cargo = "allow"
+complexity = "deny"
+correctness = "deny"
+pedantic = "deny"
+perf = "deny"
+restriction = "allow"
+style = "deny"
+suspicious = "deny"
