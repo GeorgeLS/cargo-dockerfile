@@ -15,8 +15,8 @@ fn make_path_mapper(
     crate_type: CrateType,
 ) -> impl Fn(&PathBuf) -> (Cow<str>, Cow<str>, CrateType) {
     move |path: &PathBuf| {
-        let name = path.file_name().unwrap().to_string_lossy();
-        let relative_path = path.strip_prefix(&root_path).unwrap().to_string_lossy();
+        let name: Cow<'_, str> = path.file_name().unwrap().to_string_lossy();
+        let relative_path: Cow<'_, str> = path.strip_prefix(&root_path).unwrap().to_string_lossy();
 
         (name, relative_path, crate_type)
     }
@@ -36,13 +36,11 @@ fn generate_docker_crate_type_build(
             format!("./target/release/deps/{}*", name.replace('-', "_")),
         ),
     };
-
-    let prefix = if !relative_path.is_empty() {
-        format!("{relative_path}")
-    } else {
+    let prefix: String = if relative_path.is_empty() {
         ".".to_string()
+    } else {
+        relative_path.to_string()
     };
-
     buffer.push_str(&format!(
         r#"
 WORKDIR {docker_root_dir}
@@ -55,17 +53,16 @@ RUN rm src/*.rs {extra_rm_sources}
 ADD {prefix} ./
 RUN cargo build --release
 "#
-    ))
+    ));
 }
 
 pub(crate) fn get_dockerfile(root_dir: &Path) -> PathBuf {
-    let mut buf = root_dir.to_path_buf();
+    let mut buf: PathBuf = root_dir.to_path_buf();
     buf.push("Dockerfile");
     if buf.exists() {
         buf.pop();
-        buf.push("cargo-dockerfile.Dockerfile")
+        buf.push("cargo-dockerfile.Dockerfile");
     }
-
     buf
 }
 
@@ -74,27 +71,19 @@ where
     L: Iterator<Item = &'i PathBuf>,
     B: Iterator<Item = &'i PathBuf> + Clone,
 {
-    let mut contents = String::new();
-
+    let mut contents: String = String::new();
     contents.push_str(&format!("FROM {} as builder\n", &cli.builder_image));
-
     let bin_mapper = make_path_mapper(root_dir.to_path_buf(), CrateType::Binary);
-
-    let bin_crate_as_root = bins
+    let bin_crate_as_root: Option<&PathBuf> = bins
         .clone()
-        .filter(|b| b.to_string_lossy() == root_dir.to_string_lossy())
-        .next();
-
-    let docker_root_dir = if let Some(bin) = bin_crate_as_root {
+        .find(|b| b.to_string_lossy() == root_dir.to_string_lossy());
+    let docker_root_dir:String = if let Some(bin) = bin_crate_as_root {
         let bin_crate_name = bin.file_name().unwrap().to_string_lossy();
-
         contents.push_str(&format!("RUN USER=root cargo new --bin {bin_crate_name}\n"));
-
         format!("/{bin_crate_name}")
     } else {
         "/".to_string()
     };
-
     let crate_iter = libs
         .map(make_path_mapper(root_dir.to_path_buf(), CrateType::Libary))
         .chain(
@@ -102,7 +91,6 @@ where
                 .filter(|b| Some(*b) != bin_crate_as_root)
                 .map(&bin_mapper),
         );
-
     for (name, rel_path, crate_type) in crate_iter {
         generate_docker_crate_type_build(
             &mut contents,
@@ -112,10 +100,8 @@ where
             crate_type,
         );
     }
-
     if let Some(bin) = bin_crate_as_root {
-        let bin_deps = bin.file_name().unwrap().to_string_lossy().replace('-', "_");
-
+        let bin_deps: String = bin.file_name().unwrap().to_string_lossy().replace('-', "_");
         contents.push_str(&format!(
             r#"
 WORKDIR {docker_root_dir}
@@ -126,19 +112,16 @@ RUN rm src/*.rs ./target/release/deps/{bin_deps}*
 ADD . ./
 RUN cargo build --release
 "#
-        ))
+        ));
     }
-
     if let Some(runner_image) = &cli.runner_image {
         contents.push_str(&format!("\nFROM {runner_image}"));
     }
-
     let copy_cmd = if cli.runner_image.is_some() {
         "COPY --from=builder"
     } else {
         "RUN cp"
     };
-
     contents.push_str(&format!(
         r#"
 ARG APP={}
@@ -148,26 +131,22 @@ RUN groupadd $APP_USER && useradd -g $APP_USER $APP_USER && mkdir -p $APP
 "#,
         &cli.app_path, &cli.user
     ));
-
     for bin in bins {
         let (name, rel_path, _) = bin_mapper(bin);
         let prefix = rel_path
             .is_empty()
-            .then(|| "".to_string())
+            .then(String::new)
             .unwrap_or_else(|| rel_path.to_string());
-
         contents.push_str(&format!(
             "{copy_cmd} {docker_root_dir}/{prefix}/target/release/{name} $APP/{name}\n"
         ));
     }
-
-    contents.push_str(&format!(
-        r#"
+    contents.push_str(
+        r"
 USER $USER
 WORKDIR $APP
-    "#
-    ));
-
+    ",
+    );
     if let Some(entrypoint) = &cli.entrypoint {
         let entrypoint_parts: Vec<_> = entrypoint
             .split_ascii_whitespace()
@@ -180,7 +159,6 @@ ENTRYPOINT [{}]
             entrypoint_parts.join(", ")
         ));
     }
-
     if let Some(cmd) = &cli.cmd {
         let cmd_parts: Vec<_> = cmd
             .split_ascii_whitespace()
@@ -193,6 +171,5 @@ CMD [{}]
             cmd_parts.join(", ")
         ));
     }
-
     contents
 }

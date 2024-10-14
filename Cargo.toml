@@ -5,6 +5,7 @@ edition = "2021"
 authors = ["George Liontos <sdi1600094@di.uoa.gr>"]
 readme = "README.md"
 categories = ["command-line-utilities"]
+keywords = ["cargo", "docker", "dockerfile", "generator"]
 exclude = ["build/**/*.o", "doc/**/*.html"]
 include = ["src/**/*", "Cargo.toml"]
 repository = "https://github.com/GeorgeLS/cargo-dockerfile"
@@ -14,8 +15,18 @@ cargo dockerfile is a cargo plugin for generating Dockerfiles out of your Rust p
 license = "GPL-2.0"
 
 [dependencies]
-walkdir = "2.3.2"
-cargo_toml = "0.11.6"
-anyhow = "1.0.65"
-whoami = "1.2.3"
-clap = { version = "3.2.21", features = ["derive"]}
+walkdir = "2.5.0"
+cargo_toml = "0.20.4"
+anyhow = "1.0.89"
+whoami = "1.5.2"
+clap = { version = "4.5.18", features = ["derive"]}
+
+[lints.clippy]
+cargo = "allow"
+complexity = "deny"
+correctness = "deny"
+pedantic = "deny"
+perf = "deny"
+restriction = "allow"
+style = "deny"
+suspicious = "deny"
