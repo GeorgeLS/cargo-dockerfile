@@ -12,7 +12,7 @@ repository = "https://github.com/GeorgeLS/cargo-dockerfile"
 description = """
 cargo dockerfile is a cargo plugin for generating Dockerfiles out of your Rust project
 """
-license = "GPL-2.0"
+license = "MIT"
 
 [dependencies]
 walkdir = "2.5.0"
