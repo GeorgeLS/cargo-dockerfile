@@ -12,14 +12,14 @@ repository = "https://github.com/GeorgeLS/cargo-dockerfile"
 description = """
 cargo dockerfile is a cargo plugin for generating Dockerfiles out of your Rust project
 """
-license = "GPL-2.0"
+license = "MIT"
 
 [dependencies]
 walkdir = "2.5.0"
-cargo_toml = "0.20.4"
-anyhow = "1.0.89"
-whoami = "1.5.2"
-clap = { version = "4.5.18", features = ["derive"]}
+cargo_toml = "0.22.1"
+anyhow = "1.0.98"
+whoami = "1.6.0"
+clap = { version = "4.5.40", features = ["derive"]}
 
 [lints.clippy]
 cargo = "allow"
