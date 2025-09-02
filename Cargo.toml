@@ -1,6 +1,6 @@
 [package]
 name = "cargo-dockerfile"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["George Liontos <sdi1600094@di.uoa.gr>"]
 readme = "README.md"
